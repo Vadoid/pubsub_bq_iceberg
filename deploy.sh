@@ -49,6 +49,17 @@ echo "--- Starting Deployment ---"
 echo "Project ID: $PROJECT_ID"
 echo "Region: $REGION"
 
+# ADDED: Explicitly enable the Cloud Pub/Sub API using gcloud
+echo "Enabling Cloud Pub/Sub API (pubsub.googleapis.com)..."
+gcloud services enable pubsub.googleapis.com --project="$PROJECT_ID"
+
+if [ $? -ne 0 ]; then
+  echo "Failed to enable Cloud Pub/Sub API. Exiting."
+  exit 1
+fi
+echo "Cloud Pub/Sub API enabled."
+
+
 # 1. Initialize Terraform (only once)
 echo "Initializing Terraform..."
 terraform init
