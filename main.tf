@@ -10,6 +10,12 @@ provider "google" {
 
 ## API Enablement
 
+# Enables the Cloud Pub/Sub API
+resource "google_project_service" "pubsub_api" {
+  project            = var.project_id
+  service            = "pubsub.googleapis.com"
+  disable_on_destroy = false
+}
 
 # Enables the BigQuery API
 resource "google_project_service" "bigquery_api" {
