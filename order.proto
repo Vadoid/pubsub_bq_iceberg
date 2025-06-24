@@ -1,0 +1,20 @@
+// order.proto
+syntax = "proto3";
+
+package com.example.orders;
+
+message Order {
+  string order_id = 1;
+  string customer_id = 2;
+  repeated Item items = 3;
+  double total_amount = 4;
+  string currency = 5;
+  int64 order_timestamp = 6; // Unix timestamp in milliseconds
+
+  message Item {
+    string item_id = 1;
+    string product_name = 2;
+    int32 quantity = 3;
+    double unit_price = 4;
+  }
+}
