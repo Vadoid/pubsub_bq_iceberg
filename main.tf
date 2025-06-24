@@ -167,7 +167,7 @@ resource "google_storage_bucket" "iceberg_storage_bucket" {
   project                     = var.project_id
   # Bucket names must be globally unique and can include lowercase letters, numbers, hyphens, and dots.
   # Using random_id to ensure uniqueness.
-  name                        = "${var.project_id}-cool-demos-iceberg-${random_id.bucket_suffix.hex}"
+  name                        = "${var.project_id}-${random_id.bucket_suffix.hex}"
   location                    = var.region
   uniform_bucket_level_access = true
   force_destroy               = true # Allows bucket to be destroyed even if not empty (useful for demos)

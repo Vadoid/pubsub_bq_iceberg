@@ -7,6 +7,15 @@ Infrastructure is managed entirely by Terraform, orchestrated via a bash script.
 
 Ingest simulated real-time order events via Pub/Sub into BigQuery Iceberg table.
 
+Step by step explanation of what the script + Terraform does:
+1. Creates Pub/Sub topic in format `order-events-${random_id.topic_suffix.hex}`
+2. Creates GCS bucket in format `${var.project_id}-${random_id.bucket_suffix.hex}` - this will be used to store Iceberg data.
+3. Creates dataset `orders` and table `order_event_iceberg` as native table.
+4. Creates push to BigQUery subscription from Pub/Sub topic to `order_event_iceberg`.
+5. Replaces native `order_event_iceberg` with BigQuery Table for Apache Iceberg.
+6. Last step script will output `publisher.py` with correct parameters. That script will start sending messages to Pub/Sub topic which would be immidiately visible in Iceberg table's streaming buffer.
+7. Streaming buffer will merge in a bout 60 minutes (or less) and the last step would be to run SQL query `EXPORT TABLE METADATA FROM orders.order_event_iceberg` - this way all the metadata files will be exported to GCS storage location.
+
 
 ## Getting Started
 
