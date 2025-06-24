@@ -3,11 +3,11 @@
 This quick demo demonstrates a real-time data pipeline for order event ingestion and analytics. It leverages Pub/Sub for messaging, BigQuery for warehousing, and Apache Iceberg tables for BigQuery. 
 Infrastructure is managed entirely by Terraform, orchestrated via a bash script.
 
-## 🚀 Overview
+## Overview
 
 Ingest simulated real-time order events, validate them with Protobuf schemas on Pub/Sub, and store them in BigQuery Apache Iceberg Tables, queryable via BigQuery and Serverless spark.
 
-## ⚙️ Key Technologies
+## Key Technologies
 
 * **GCP**: Pub/Sub, BigQuery, Cloud Storage (GCS)
 * **IaC**: Terraform
@@ -15,7 +15,7 @@ Ingest simulated real-time order events, validate them with Protobuf schemas on 
 * **Schema**: Protobuf
 * **Publisher**: Python
 
-## ✨ Features
+## Features
 
 * Automated GCP Infrastructure (IaC)
 * Real-time Messaging with Schema Validation
@@ -23,7 +23,7 @@ Ingest simulated real-time order events, validate them with Protobuf schemas on 
 * Direct BigQuery Integration
 * Streamlined Deployment Script
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -51,9 +51,11 @@ The deployment script will output the exact command. Example:
 
 ```bash
 python publisher.py --project_id "your-gcp-project-id" --topic_id "order-events-<random_suffix>"
+```
 
-### Cleanup
+## Cleanup
 
 Run 
 ```bash
 terraform destroy
+```
