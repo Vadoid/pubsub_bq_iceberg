@@ -5,23 +5,8 @@ Infrastructure is managed entirely by Terraform, orchestrated via a bash script.
 
 ## Overview
 
-Ingest simulated real-time order events, validate them with Protobuf schemas on Pub/Sub, and store them in BigQuery Apache Iceberg Tables, queryable via BigQuery and Serverless spark.
+Ingest simulated real-time order events via Pub/Sub into BigQuery Iceberg table.
 
-## Key Technologies
-
-* **GCP**: Pub/Sub, BigQuery, Cloud Storage (GCS)
-* **IaC**: Terraform
-* **Data Format**: Apache Iceberg
-* **Schema**: Protobuf
-* **Publisher**: Python
-
-## Features
-
-* Automated GCP Infrastructure (IaC)
-* Real-time Messaging with Schema Validation
-* Open Data Lake Table Format (Iceberg on GCS)
-* Direct BigQuery Integration
-* Streamlined Deployment Script
 
 ## Getting Started
 
