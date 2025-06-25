@@ -23,17 +23,17 @@ Step by step explanation of what the script + Terraform does:
 
 * GCP Project with `Editor` role (or equivalent IAM)
 * Google Cloud SDK (`gcloud`, `bq` CLI configured)
-* Terraform `~> 1.0`
-* Python 3 + `pip` (`google-cloud-pubsub`, `faker`, `protobuf`)
-* `protoc` compiler (to generate `order_pb2.py`) (optional, if you decicde to change the schema)
+* Terraform (duh)
+* Install dependencies via `pip install google-cloud-pubsub faker protobuf` (in GCP console all should be available, except faker)
+* `protoc` compiler - `pip install grpcio-tools` <-this will take awhile (to generate `order_pb2.py`) (optional, if you decide to change the schema just because I've had lot's of time on my hands (no, I'm just lazy) and wanted to use protobuf. By the way, if you are curious, this solution will also work with BINARY protobuf messages encoding (as opposed to JSON) pretty cool, eh?)
 
 ### Deployment Steps
 
 1. **Clone this repo, don't change anything.**
 
 2.  **Generate Python Protobuf code - OPTIONAL, ONLY IF YOU DECIDE TO CHANGE PROTO SCHEMA**:
-    ```bash
-    python -m grpc_tools.protoc --proto_path=. --python_out=. --pyi_out=. --grpc_python_out=. order.proto
+     ```bash
+    python -m grpc_tools.protoc --proto_path=. --python_out=. order.proto
     ```
 2.  **Run deployment script**: The script will handle Terraform apply (creating base infra, BQ dataset & placeholder table, Pub/Sub topic & BQ subscription), followed by SQL execution to transform the BQ table to Iceberg.
     ```bash

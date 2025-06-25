@@ -61,7 +61,7 @@ def generate_random_order():
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
     order.customer_id = fake.uuid4()
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
-    # Unix timestamp in milliseconds
+    # Unix timestamp in microseconds for BQ
     order.order_timestamp = int(datetime.now().timestamp() * 1000000)
 
     num_items = random.randint(1, 5)
