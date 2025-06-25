@@ -49,7 +49,7 @@ echo "--- Starting Deployment ---"
 echo "Project ID: $PROJECT_ID"
 echo "Region: $REGION"
 
-# ADDED: Explicitly enable the Cloud Pub/Sub API using gcloud
+# Explicitly enable the Cloud Pub/Sub API using gcloud so we are doing all in the correct sequence
 echo "Enabling Cloud Pub/Sub API (pubsub.googleapis.com)..."
 gcloud services enable pubsub.googleapis.com --project="$PROJECT_ID"
 
@@ -221,6 +221,6 @@ echo "Make sure you have authenticated 'gcloud' and installed necessary Python l
 echo "  pip install google-cloud-pubsub faker protobuf"
 echo "  python -m grpc_tools.protoc --proto_path=. --python_out=. --pyi_out=. --grpc_python_out=. order.proto"
 echo ""
-# MODIFIED: Instruction for running publisher.py with arguments
+# Instruction for running publisher.py with arguments
 echo "Then run the publisher with the following command:"
 echo "  python publisher.py --project_id \"$PROJECT_ID\" --topic_id \"$PUBSUB_TOPIC_NAME\""

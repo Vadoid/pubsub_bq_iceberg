@@ -1,26 +1,23 @@
 # publisher.py
 
 import os
-import sys # ADDED: Import sys for command-line arguments
+import sys 
 import time
 import random
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
 from google.protobuf import json_format
-from faker import Faker # For generating random data
+from faker import Faker 
 
 # Import the generated protobuf code
 from order_pb2 import Order # Only import the top-level message
 
-# --- Configuration ---
-# MODIFIED: Accept PROJECT_ID and TOPIC_ID from command-line arguments
-# Example usage: python publisher.py --project_id your-gcp-project --topic_id your-pubsub-topic
 
 def parse_arguments():
     project_id = None
     topic_id = None
-    args = sys.argv[1:] # Skip the script name itself
+    args = sys.argv[1:] 
 
     i = 0
     while i < len(args):

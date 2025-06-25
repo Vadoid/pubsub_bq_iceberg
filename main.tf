@@ -58,15 +58,15 @@ resource "google_bigquery_dataset" "orders_dataset" {
   depends_on = [google_project_service.bigquery_api]
 }
 
-# CORRECTED: Dummy BigQuery table is now named "order_event_iceberg" to match the final table.
-# This ensures the Pub/Sub subscription correctly points to this ID, which will then be overwritten by SQL.
-resource "google_bigquery_table" "order_event_iceberg" { # RENAMED resource
+
+## Creating native table first to attach the subscription to it
+
+resource "google_bigquery_table" "order_event_iceberg" { 
   project             = var.project_id
   dataset_id          = google_bigquery_dataset.orders_dataset.dataset_id
   table_id            = "order_event_iceberg" # Must match the SQL table_id
   deletion_protection = false # Set to false for demo purposes to allow replace/destroy
 
-  # Schema derived from your order.proto, adjusted for BigQuery types
   schema = jsonencode([
     {
       "name": "order_id",
@@ -141,15 +141,13 @@ resource "google_pubsub_topic" "order_topic" {
   depends_on = [google_pubsub_schema.order_schema]
 }
 
-# MODIFIED: Creates a Pub/Sub subscription pushing to BigQuery
+# Creates a Pub/Sub subscription pushing to BigQuery native table for now
 resource "google_pubsub_subscription" "order_subscription" {
   project            = var.project_id
   name               = "order-events-subscription-${random_id.topic_suffix.hex}-bq" # Link subscription to topic suffix and indicate BQ destination
   topic              = google_pubsub_topic.order_topic.id
-  # Removed: ack_deadline_seconds and labels are not applicable for BigQuery subscriptions
 
   bigquery_config {
-    # Full table path: project.dataset.table - now correctly references the table created by Terraform
     table               = "${google_bigquery_table.order_event_iceberg.project}.${google_bigquery_table.order_event_iceberg.dataset_id}.${google_bigquery_table.order_event_iceberg.table_id}"
     use_table_schema    = true  # Use the BigQuery table's explicit schema
     write_metadata      = false  # Optional: include Pub/Sub message metadata in the BigQuery table

@@ -40,6 +40,7 @@ Step by step explanation of what the script + Terraform does:
     chmod +x deploy.sh
     ./deploy.sh --project_id your-gcp-project-id --region us-central1
     ```
+3. **Confirm `Do you want to proceed with applying all Terraform changes? (yes/no)` message checking that the plan and the resources to be created are in line with expectations (they should be).** 
 
 ### Running the Publisher
 
