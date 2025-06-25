@@ -62,7 +62,7 @@ def generate_random_order():
     order.customer_id = fake.uuid4()
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     # Unix timestamp in milliseconds
-    order.order_timestamp = int(datetime.now().timestamp() * 1000)
+    order.order_timestamp = int(datetime.now().timestamp() * 1000000)
 
     num_items = random.randint(1, 5)
     total_amount = 0.0
