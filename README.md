@@ -29,7 +29,9 @@ Step by step explanation of what the script + Terraform does:
 
 ### Deployment Steps
 
-1.  **Generate Python Protobuf code - OPTIONAL, ONLY IF YOU CHANGE PROTO SCHEMA**:
+1. **Clone this repo, don't change anything.**
+
+2.  **Generate Python Protobuf code - OPTIONAL, ONLY IF YOU DECIDE TO CHANGE PROTO SCHEMA**:
     ```bash
     python -m grpc_tools.protoc --proto_path=. --python_out=. --pyi_out=. --grpc_python_out=. order.proto
     ```
