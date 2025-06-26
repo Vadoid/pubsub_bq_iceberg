@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import random
+import string # Import string for alphanumeric generation
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
@@ -45,25 +46,48 @@ def parse_arguments():
 PROJECT_ID, TOPIC_ID = parse_arguments()
 
 
-MESSAGES_PER_MINUTE = 10000  # Updated to 10,000 messages per minute
-INTERVAL_SECONDS = 60 / MESSAGES_PER_MINUTE # Time to wait between each message
+MESSAGES_PER_MINUTE = 10000
+INTERVAL_SECONDS = 60 / MESSAGES_PER_MINUTE
 
 fake = Faker()
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 
 print(f"Publisher initialized for topic: {topic_path}")
-print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.4f} seconds between messages).") # Increased precision for interval
+print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.4f} seconds between messages).")
 
 # --- START OF MODIFICATION ---
-# Define a limited list of product names
-PRODUCT_NAMES = [
-    "Red Widget", "Blue Gadget", "Green Device", "Yellow Accessory",
-    "Purple Widget", "Orange Gadget", "Black Device", "White Accessory",
-    "Silver Widget", "Gold Gadget", "Bronze Ornament", "Copper Trinket",
-    "Diamond Tool", "Emerald Holder", "Ruby Lamp", "Sapphire Bell",
-    "Titanium Spoon", "Platinum Fork", "Iron Knife", "Steel Plate"
+# Helper function to generate a random alphanumeric ID for initial product setup
+def generate_alphanumeric_id(length=8):
+    characters = string.ascii_uppercase + string.digits
+    return ''.join(random.choice(characters) for i in range(length))
+
+# Define a list of fixed products, where each product is a dictionary
+# containing a unique item_id and its corresponding product_name.
+# The item_ids are now custom alphanumeric strings.
+FIXED_PRODUCTS = [
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Red Widget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Blue Gadget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Green Device"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Yellow Accessory"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Purple Widget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Orange Gadget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Black Device"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "White Accessory"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Silver Widget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Gold Gadget"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Bronze Ornament"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Copper Trinket"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Diamond Tool"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Emerald Holder"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Ruby Lamp"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Sapphire Bell"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Titanium Spoon"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Platinum Fork"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Iron Knife"},
+    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Steel Plate"}
 ]
+
 
 # Calculate the time range for timestamps
 END_DATE = datetime.now()
@@ -84,18 +108,17 @@ def generate_random_order():
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
     order.customer_id = fake.uuid4()
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
-    # Unix timestamp in microseconds for BQ
-    # --- START OF MODIFICATION ---
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
-    # --- END OF MODIFICATION ---
 
     num_items = random.randint(1, 5)
     total_amount = 0.0
 
     for _ in range(num_items):
         item = order.items.add()
-        item.item_id = fake.isbn10()
-        item.product_name = random.choice(PRODUCT_NAMES)
+        # Select a random product from the FIXED_PRODUCTS list
+        chosen_product = random.choice(FIXED_PRODUCTS)
+        item.item_id = chosen_product["item_id"]
+        item.product_name = chosen_product["product_name"]
         item.quantity = random.randint(1, 10)
         item.unit_price = round(random.uniform(5.0, 500.0), 2)
         total_amount += item.quantity * item.unit_price
@@ -107,8 +130,6 @@ def publish_message(order_message):
     """Publishes a single Protobuf message to Pub/Sub."""
     try:
         data = json_format.MessageToJson(order_message).encode("utf-8")
-        # For high throughput, Pub/Sub client libraries handle batching by default.
-        # Ensure you have sufficient project quotas.
         future = publisher.publish(topic_path, data, encoding='json')
         return future.result()
     except Exception as e:
@@ -127,21 +148,15 @@ def main():
 
         if message_id:
             message_count += 1
-            if message_count % 1000 == 0: # Print status update every 1000 messages for 10k/min rate
+            if message_count % 1000 == 0:
                 elapsed_time = time.time() - start_time
                 print(f"Published {message_count} messages. Last message ID: {message_id}. Elapsed time: {elapsed_time:.2f}s")
 
-        # Calculate time to wait for the next message
         time_for_next_message = start_time + (message_count * INTERVAL_SECONDS)
         sleep_duration = time_for_next_message - time.time()
 
         if sleep_duration > 0:
             time.sleep(sleep_duration)
-        # It's less critical to "catch up" immediately for very high rates,
-        # as Pub/Sub client libraries are designed for high throughput and
-        # will manage internal queues and retries.
-        # However, if you see consistent warnings, consider increasing machine resources or
-        # reviewing Pub/Sub quotas.
 
 if __name__ == "__main__":
     try:
