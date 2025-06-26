@@ -5,6 +5,7 @@ import sys
 import time
 import random
 import string
+import csv # Import the csv module
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
@@ -56,9 +57,7 @@ topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 print(f"Publisher initialized for topic: {topic_path}")
 print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.4f} seconds between messages).")
 
-# --- START OF MODIFICATION ---
 # Define a list of fixed products with explicitly defined item_ids and product_names.
-# The item_ids will now be consistent across all runs.
 FIXED_PRODUCTS = [
     {"item_id": "PROD-RW001", "product_name": "Red Widget"},
     {"item_id": "PROD-BG002", "product_name": "Blue Gadget"},
@@ -81,28 +80,37 @@ FIXED_PRODUCTS = [
     {"item_id": "PROD-IK019", "product_name": "Iron Knife"},
     {"item_id": "PROD-SP020", "product_name": "Steel Plate"}
 ]
-# Removed the generate_alphanumeric_id helper function as it's no longer needed for product IDs.
-# --- END OF MODIFICATION ---
 
-# Pre-defined pool of 15 unique customer IDs
-CUSTOMER_ID_POOL = [
-    "CUST-A1B2C3D4E5F6",
-    "CUST-F7E6D5C4B3A2",
-    "CUST-1A2B3C4D5E6F",
-    "CUST-6F5E4D3C2B1A",
-    "CUST-ABCDEFGHIJ01",
-    "CUST-ZYXWVUTSRQ98",
-    "CUST-001122334455",
-    "CUST-554433221100",
-    "CUST-DEV987654321",
-    "CUST-PROD12345678",
-    "CUST-QWERTYUIOPAS",
-    "CUST-DFGHJKLMNBVC",
-    "CUST-POIUYTREWQLK",
-    "CUST-MNBVCXZASDFG",
-    "CUST-ZXCVBNMLKIOP"
-]
-print(f"Using a pre-defined pool of {len(CUSTOMER_ID_POOL)} customer IDs.")
+# --- START OF MODIFICATION ---
+def load_customer_ids_from_csv(file_path="customer_ids.csv"):
+    """Reads customer IDs from a CSV file."""
+    customer_ids = []
+    try:
+        with open(file_path, mode='r', newline='', encoding='utf-8') as csvfile:
+            reader = csv.reader(csvfile)
+            header = next(reader) # Skip the header row
+            if "customer_id" not in header:
+                print(f"Error: 'customer_id' column not found in {file_path}", file=sys.stderr)
+                sys.exit(1)
+            customer_id_index = header.index("customer_id")
+
+            for row in reader:
+                if row: # Ensure row is not empty
+                    customer_ids.append(row[customer_id_index].strip())
+        print(f"Loaded {len(customer_ids)} customer IDs from {file_path}.")
+        if not customer_ids:
+            print(f"Warning: No customer IDs found in {file_path}. Please ensure the file is not empty.", file=sys.stderr)
+            sys.exit(1)
+        return customer_ids
+    except FileNotFoundError:
+        print(f"Error: customer_ids.csv not found at {file_path}. Please make sure it's in the root directory.", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"An error occurred while reading customer_ids.csv: {e}", file=sys.stderr)
+        sys.exit(1)
+
+CUSTOMER_ID_POOL = load_customer_ids_from_csv()
+# --- END OF MODIFICATION ---
 
 # Calculate the time range for timestamps
 END_DATE = datetime.now()
@@ -119,6 +127,7 @@ def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
+    # Select a customer ID from the predefined pool (now loaded from CSV)
     order.customer_id = random.choice(CUSTOMER_ID_POOL)
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
@@ -128,7 +137,6 @@ def generate_random_order():
 
     for _ in range(num_items):
         item = order.items.add()
-        # Select a random product from the FIXED_PRODUCTS list, which now has static item_ids
         chosen_product = random.choice(FIXED_PRODUCTS)
         item.item_id = chosen_product["item_id"]
         item.product_name = chosen_product["product_name"]
