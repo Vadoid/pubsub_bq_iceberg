@@ -108,6 +108,112 @@ resource "google_bigquery_table" "order_event_iceberg" {
   depends_on = [google_bigquery_dataset.orders_dataset]
 }
 
+#########################################################################
+## NEW: Native BigQuery Tables and Subscriptions
+#########################################################################
+
+# Native BigQuery table: order_event_native
+resource "google_bigquery_table" "order_event_native" {
+  project             = var.project_id
+  dataset_id          = google_bigquery_dataset.orders_dataset.dataset_id
+  table_id            = "order_event_native"
+  deletion_protection = false
+
+  schema = jsonencode([
+    {
+      "name": "order_id",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "customer_id",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "items",
+      "type": "RECORD",
+      "mode": "REPEATED",
+      "fields": [
+        {"name": "item_id", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "product_name", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "quantity", "type": "INTEGER", "mode": "NULLABLE"},
+        {"name": "unit_price", "type": "FLOAT", "mode": "NULLABLE"}
+      ]
+    },
+    {
+      "name": "total_amount",
+      "type": "FLOAT",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "currency",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "order_timestamp",
+      "type": "TIMESTAMP", # Changed to TIMESTAMP for partitioning/clustering
+      "mode": "NULLABLE"
+    }
+  ])
+  depends_on = [google_bigquery_dataset.orders_dataset]
+}
+
+# Native BigQuery table: order_event_native_part_clust (partitioned and clustered)
+resource "google_bigquery_table" "order_event_native_part_clust" {
+  project             = var.project_id
+  dataset_id          = google_bigquery_dataset.orders_dataset.dataset_id
+  table_id            = "order_event_native_part_clust"
+  deletion_protection = false
+
+  time_partitioning {
+    type    = "DAY"
+    field   = "order_timestamp" # Partition by this column
+  }
+
+  clustering = ["customer_id", "order_id"] # Cluster by these columns
+
+  schema = jsonencode([
+    {
+      "name": "order_id",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "customer_id",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "items",
+      "type": "RECORD",
+      "mode": "REPEATED",
+      "fields": [
+        {"name": "item_id", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "product_name", "type": "STRING", "mode": "NULLABLE"},
+        {"name": "quantity", "type": "INTEGER", "mode": "NULLABLE"},
+        {"name": "unit_price", "type": "FLOAT", "mode": "NULLABLE"}
+      ]
+    },
+    {
+      "name": "total_amount",
+      "type": "FLOAT",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "currency",
+      "type": "STRING",
+      "mode": "NULLABLE"
+    },
+    {
+      "name": "order_timestamp",
+      "type": "TIMESTAMP", # Must be TIMESTAMP or DATE for time partitioning
+      "mode": "NULLABLE"
+    }
+  ])
+  depends_on = [google_bigquery_dataset.orders_dataset]
+}
 
 ## Pub/Sub Resources
 
@@ -131,8 +237,8 @@ resource "google_pubsub_topic" "order_topic" {
   name        = "order-events-${random_id.topic_suffix.hex}" # Dynamic topic name
 
   schema_settings {
-    schema      = google_pubsub_schema.order_schema.id
-    encoding    = "JSON" # Confirmed: Using JSON encoding for Protobuf messages
+    schema    = google_pubsub_schema.order_schema.id
+    encoding  = "JSON" # Confirmed: Using JSON encoding for Protobuf messages
   }
 
   depends_on = [google_pubsub_schema.order_schema]
@@ -145,9 +251,9 @@ resource "google_pubsub_subscription" "order_subscription" {
   topic              = google_pubsub_topic.order_topic.id
 
   bigquery_config {
-    table               = "${google_bigquery_table.order_event_iceberg.project}.${google_bigquery_table.order_event_iceberg.dataset_id}.${google_bigquery_table.order_event_iceberg.table_id}"
-    use_table_schema    = true  # Use the BigQuery table's explicit schema
-    write_metadata      = false  # Optional: include Pub/Sub message metadata in the BigQuery table
+    table             = "${google_bigquery_table.order_event_iceberg.project}.${google_bigquery_table.order_event_iceberg.dataset_id}.${google_bigquery_table.order_event_iceberg.table_id}"
+    use_table_schema  = true  # Use the BigQuery table's explicit schema
+    write_metadata    = false  # Optional: include Pub/Sub message metadata in the BigQuery table
   }
 
   depends_on = [
@@ -155,6 +261,46 @@ resource "google_pubsub_subscription" "order_subscription" {
     google_bigquery_table.order_event_iceberg # Explicitly depend on the BQ table being created
   ]
 }
+
+## NEW: Pub/Sub Subscription for order_event_native
+resource "google_pubsub_subscription" "order_subscription_native" {
+  project            = var.project_id
+  name               = "order-events-subscription-${random_id.topic_suffix.hex}-native"
+  topic              = google_pubsub_topic.order_topic.id
+
+  bigquery_config {
+    table             = "${google_bigquery_table.order_event_native.project}.${google_bigquery_table.order_event_native.dataset_id}.${google_bigquery_table.order_event_native.table_id}"
+    use_table_schema  = true
+    write_metadata    = false
+  }
+
+  depends_on = [
+    google_pubsub_topic.order_topic,
+    google_bigquery_table.order_event_native
+  ]
+}
+
+## NEW: Pub/Sub Subscription for order_event_native_part_clust
+resource "google_pubsub_subscription" "order_subscription_part_clust" {
+  project            = var.project_id
+  name               = "order-events-subscription-${random_id.topic_suffix.hex}-part-clust"
+  topic              = google_pubsub_topic.order_topic.id
+
+  bigquery_config {
+    table             = "${google_bigquery_table.order_event_native_part_clust.project}.${google_bigquery_table.order_event_native_part_clust.dataset_id}.${google_bigquery_table.order_event_native_part_clust.table_id}"
+    use_table_schema  = true
+    write_metadata    = false
+  }
+
+  depends_on = [
+    google_pubsub_topic.order_topic,
+    google_bigquery_table.order_event_native_part_clust
+  ]
+}
+
+#########################################################################
+## END NEW: Native BigQuery Tables and Subscriptions
+#########################################################################
 
 
 ## GCS Bucket for Iceberg Table Storage
@@ -191,7 +337,17 @@ output "pubsub_schema_id" {
 
 output "pubsub_subscription_name" {
   value       = google_pubsub_subscription.order_subscription.name
-  description = "The name of the Pub/Sub subscription."
+  description = "The name of the Pub/Sub subscription for the Iceberg table."
+}
+
+output "pubsub_subscription_native_name" {
+  value       = google_pubsub_subscription.order_subscription_native.name
+  description = "The name of the Pub/Sub subscription for the native table."
+}
+
+output "pubsub_subscription_part_clust_name" {
+  value       = google_pubsub_subscription.order_subscription_part_clust.name
+  description = "The name of the Pub/Sub subscription for the partitioned and clustered native table."
 }
 
 output "gcs_bucket_name" {
@@ -202,4 +358,14 @@ output "gcs_bucket_name" {
 output "bigquery_dataset_id" {
   value       = google_bigquery_dataset.orders_dataset.dataset_id # Now derived from Terraform resource
   description = "ID of the BigQuery dataset."
+}
+
+output "bigquery_table_native_id" {
+  value       = google_bigquery_table.order_event_native.id
+  description = "ID of the native BigQuery table."
+}
+
+output "bigquery_table_part_clust_id" {
+  value       = google_bigquery_table.order_event_native_part_clust.id
+  description = "ID of the partitioned and clustered native BigQuery table."
 }
