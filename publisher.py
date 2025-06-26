@@ -1,14 +1,14 @@
 # publisher.py
 
 import os
-import sys 
+import sys
 import time
 import random
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
 from google.protobuf import json_format
-from faker import Faker 
+from faker import Faker
 
 # Import the generated protobuf code
 from order_pb2 import Order # Only import the top-level message
@@ -17,7 +17,7 @@ from order_pb2 import Order # Only import the top-level message
 def parse_arguments():
     project_id = None
     topic_id = None
-    args = sys.argv[1:] 
+    args = sys.argv[1:]
 
     i = 0
     while i < len(args):
@@ -55,6 +55,16 @@ topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 print(f"Publisher initialized for topic: {topic_path}")
 print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.2f} seconds between messages).")
 
+# --- START OF MODIFICATION ---
+# Define a limited list of product names
+PRODUCT_NAMES = [
+    "Red Widget", "Blue Gadget", "Green Device", "Yellow Accessory",
+    "Purple Widget", "Orange Gadget", "Black Device", "White Accessory",
+    "Silver Widget", "Gold Gadget"
+]
+# --- END OF MODIFICATION ---
+
+
 def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
@@ -70,7 +80,10 @@ def generate_random_order():
     for _ in range(num_items):
         item = order.items.add()
         item.item_id = fake.isbn10()
-        item.product_name = fake.word().capitalize() + " " + fake.color_name().capitalize() + " " + random.choice(["Widget", "Gadget", "Device", "Accessory"])
+        # --- START OF MODIFICATION ---
+        # Select product name from the predefined list
+        item.product_name = random.choice(PRODUCT_NAMES)
+        # --- END OF MODIFICATION ---
         item.quantity = random.randint(1, 10)
         item.unit_price = round(random.uniform(5.0, 500.0), 2)
         total_amount += item.quantity * item.unit_price
