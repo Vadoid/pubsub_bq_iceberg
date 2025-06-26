@@ -49,7 +49,6 @@ PROJECT_ID, TOPIC_ID = parse_arguments()
 MESSAGES_PER_MINUTE = 10000
 INTERVAL_SECONDS = 60 / MESSAGES_PER_MINUTE
 
-# Faker is still used for other random data like product names if needed, but not for customer_id generation anymore.
 fake = Faker()
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
@@ -57,37 +56,34 @@ topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 print(f"Publisher initialized for topic: {topic_path}")
 print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.4f} seconds between messages).")
 
-# Helper function to generate a random alphanumeric ID for initial product setup
-def generate_alphanumeric_id(length=8):
-    characters = string.ascii_uppercase + string.digits
-    return ''.join(random.choice(characters) for i in range(length))
-
-# Define a list of fixed products, where each product is a dictionary
-# containing a unique item_id and its corresponding product_name.
-FIXED_PRODUCTS = [
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Red Widget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Blue Gadget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Green Device"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Yellow Accessory"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Purple Widget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Orange Gadget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Black Device"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "White Accessory"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Silver Widget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Gold Gadget"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Bronze Ornament"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Copper Trinket"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Diamond Tool"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Emerald Holder"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Ruby Lamp"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Sapphire Bell"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Titanium Spoon"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Platinum Fork"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Iron Knife"},
-    {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Steel Plate"}
-]
-
 # --- START OF MODIFICATION ---
+# Define a list of fixed products with explicitly defined item_ids and product_names.
+# The item_ids will now be consistent across all runs.
+FIXED_PRODUCTS = [
+    {"item_id": "PROD-RW001", "product_name": "Red Widget"},
+    {"item_id": "PROD-BG002", "product_name": "Blue Gadget"},
+    {"item_id": "PROD-GD003", "product_name": "Green Device"},
+    {"item_id": "PROD-YA004", "product_name": "Yellow Accessory"},
+    {"item_id": "PROD-PW005", "product_name": "Purple Widget"},
+    {"item_id": "PROD-OG006", "product_name": "Orange Gadget"},
+    {"item_id": "PROD-BD007", "product_name": "Black Device"},
+    {"item_id": "PROD-WA008", "product_name": "White Accessory"},
+    {"item_id": "PROD-SW009", "product_name": "Silver Widget"},
+    {"item_id": "PROD-GG010", "product_name": "Gold Gadget"},
+    {"item_id": "PROD-BO011", "product_name": "Bronze Ornament"},
+    {"item_id": "PROD-CT012", "product_name": "Copper Trinket"},
+    {"item_id": "PROD-DT013", "product_name": "Diamond Tool"},
+    {"item_id": "PROD-EH014", "product_name": "Emerald Holder"},
+    {"item_id": "PROD-RL015", "product_name": "Ruby Lamp"},
+    {"item_id": "PROD-SB016", "product_name": "Sapphire Bell"},
+    {"item_id": "PROD-TS017", "product_name": "Titanium Spoon"},
+    {"item_id": "PROD-PF018", "product_name": "Platinum Fork"},
+    {"item_id": "PROD-IK019", "product_name": "Iron Knife"},
+    {"item_id": "PROD-SP020", "product_name": "Steel Plate"}
+]
+# Removed the generate_alphanumeric_id helper function as it's no longer needed for product IDs.
+# --- END OF MODIFICATION ---
+
 # Pre-defined pool of 15 unique customer IDs
 CUSTOMER_ID_POOL = [
     "CUST-A1B2C3D4E5F6",
@@ -107,7 +103,6 @@ CUSTOMER_ID_POOL = [
     "CUST-ZXCVBNMLKIOP"
 ]
 print(f"Using a pre-defined pool of {len(CUSTOMER_ID_POOL)} customer IDs.")
-# --- END OF MODIFICATION ---
 
 # Calculate the time range for timestamps
 END_DATE = datetime.now()
@@ -124,7 +119,6 @@ def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
-    # Select a customer ID from the predefined pool
     order.customer_id = random.choice(CUSTOMER_ID_POOL)
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
@@ -134,6 +128,7 @@ def generate_random_order():
 
     for _ in range(num_items):
         item = order.items.add()
+        # Select a random product from the FIXED_PRODUCTS list, which now has static item_ids
         chosen_product = random.choice(FIXED_PRODUCTS)
         item.item_id = chosen_product["item_id"]
         item.product_name = chosen_product["product_name"]
