@@ -5,7 +5,7 @@ import sys
 import time
 import random
 import string
-import csv # Import the csv module
+import csv
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
@@ -81,8 +81,7 @@ FIXED_PRODUCTS = [
     {"item_id": "PROD-SP020", "product_name": "Steel Plate"}
 ]
 
-# --- START OF MODIFICATION ---
-def load_customer_ids_from_csv(file_path="customer_ids.csv"):
+def load_customer_ids_from_csv(file_path="customers_ids.csv"): # Corrected filename here
     """Reads customer IDs from a CSV file."""
     customer_ids = []
     try:
@@ -95,22 +94,21 @@ def load_customer_ids_from_csv(file_path="customer_ids.csv"):
             customer_id_index = header.index("customer_id")
 
             for row in reader:
-                if row: # Ensure row is not empty
+                if row and row[customer_id_index].strip(): # Ensure row is not empty and ID is not blank
                     customer_ids.append(row[customer_id_index].strip())
         print(f"Loaded {len(customer_ids)} customer IDs from {file_path}.")
         if not customer_ids:
-            print(f"Warning: No customer IDs found in {file_path}. Please ensure the file is not empty.", file=sys.stderr)
+            print(f"Warning: No customer IDs found in {file_path}. Please ensure the file contains data under 'customer_id'.", file=sys.stderr)
             sys.exit(1)
         return customer_ids
     except FileNotFoundError:
-        print(f"Error: customer_ids.csv not found at {file_path}. Please make sure it's in the root directory.", file=sys.stderr)
+        print(f"Error: {file_path} not found. Please make sure it's in the root directory.", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
-        print(f"An error occurred while reading customer_ids.csv: {e}", file=sys.stderr)
+        print(f"An error occurred while reading {file_path}: {e}", file=sys.stderr)
         sys.exit(1)
 
 CUSTOMER_ID_POOL = load_customer_ids_from_csv()
-# --- END OF MODIFICATION ---
 
 # Calculate the time range for timestamps
 END_DATE = datetime.now()
@@ -127,7 +125,6 @@ def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
-    # Select a customer ID from the predefined pool (now loaded from CSV)
     order.customer_id = random.choice(CUSTOMER_ID_POOL)
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
