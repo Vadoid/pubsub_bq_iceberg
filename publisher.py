@@ -49,6 +49,7 @@ PROJECT_ID, TOPIC_ID = parse_arguments()
 MESSAGES_PER_MINUTE = 10000
 INTERVAL_SECONDS = 60 / MESSAGES_PER_MINUTE
 
+# Faker is still used for other random data like product names if needed, but not for customer_id generation anymore.
 fake = Faker()
 publisher = pubsub_v1.PublisherClient()
 topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
@@ -87,9 +88,25 @@ FIXED_PRODUCTS = [
 ]
 
 # --- START OF MODIFICATION ---
-# Create a pool of 15 unique customer IDs
-CUSTOMER_ID_POOL = [fake.uuid4() for _ in range(15)]
-print(f"Generated a pool of {len(CUSTOMER_ID_POOL)} customer IDs.")
+# Pre-defined pool of 15 unique customer IDs
+CUSTOMER_ID_POOL = [
+    "CUST-A1B2C3D4E5F6",
+    "CUST-F7E6D5C4B3A2",
+    "CUST-1A2B3C4D5E6F",
+    "CUST-6F5E4D3C2B1A",
+    "CUST-ABCDEFGHIJ01",
+    "CUST-ZYXWVUTSRQ98",
+    "CUST-001122334455",
+    "CUST-554433221100",
+    "CUST-DEV987654321",
+    "CUST-PROD12345678",
+    "CUST-QWERTYUIOPAS",
+    "CUST-DFGHJKLMNBVC",
+    "CUST-POIUYTREWQLK",
+    "CUST-MNBVCXZASDFG",
+    "CUST-ZXCVBNMLKIOP"
+]
+print(f"Using a pre-defined pool of {len(CUSTOMER_ID_POOL)} customer IDs.")
 # --- END OF MODIFICATION ---
 
 # Calculate the time range for timestamps
@@ -107,10 +124,8 @@ def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
-    # --- START OF MODIFICATION ---
     # Select a customer ID from the predefined pool
     order.customer_id = random.choice(CUSTOMER_ID_POOL)
-    # --- END OF MODIFICATION ---
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
 
