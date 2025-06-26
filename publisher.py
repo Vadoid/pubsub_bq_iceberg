@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import random
-import string # Import string for alphanumeric generation
+import string
 from datetime import datetime, timedelta
 
 from google.cloud import pubsub_v1
@@ -56,7 +56,6 @@ topic_path = publisher.topic_path(PROJECT_ID, TOPIC_ID)
 print(f"Publisher initialized for topic: {topic_path}")
 print(f"Publishing {MESSAGES_PER_MINUTE} messages per minute ({INTERVAL_SECONDS:.4f} seconds between messages).")
 
-# --- START OF MODIFICATION ---
 # Helper function to generate a random alphanumeric ID for initial product setup
 def generate_alphanumeric_id(length=8):
     characters = string.ascii_uppercase + string.digits
@@ -64,7 +63,6 @@ def generate_alphanumeric_id(length=8):
 
 # Define a list of fixed products, where each product is a dictionary
 # containing a unique item_id and its corresponding product_name.
-# The item_ids are now custom alphanumeric strings.
 FIXED_PRODUCTS = [
     {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Red Widget"},
     {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Blue Gadget"},
@@ -88,6 +86,11 @@ FIXED_PRODUCTS = [
     {"item_id": f"PROD-{generate_alphanumeric_id()}", "product_name": "Steel Plate"}
 ]
 
+# --- START OF MODIFICATION ---
+# Create a pool of 15 unique customer IDs
+CUSTOMER_ID_POOL = [fake.uuid4() for _ in range(15)]
+print(f"Generated a pool of {len(CUSTOMER_ID_POOL)} customer IDs.")
+# --- END OF MODIFICATION ---
 
 # Calculate the time range for timestamps
 END_DATE = datetime.now()
@@ -99,14 +102,15 @@ def get_random_timestamp_in_range():
     random_second = random.uniform(0, TIME_RANGE_SECONDS)
     return START_DATE + timedelta(seconds=random_second)
 
-# --- END OF MODIFICATION ---
-
 
 def generate_random_order():
     """Generates a random Order Protobuf message."""
     order = Order()
     order.order_id = f"ORD-{datetime.now().strftime('%Y%m%d%H%M%S')}-{random.randint(1000, 9999)}"
-    order.customer_id = fake.uuid4()
+    # --- START OF MODIFICATION ---
+    # Select a customer ID from the predefined pool
+    order.customer_id = random.choice(CUSTOMER_ID_POOL)
+    # --- END OF MODIFICATION ---
     order.currency = random.choice(["USD", "EUR", "GBP", "JPY"])
     order.order_timestamp = int(get_random_timestamp_in_range().timestamp() * 1000000)
 
@@ -115,7 +119,6 @@ def generate_random_order():
 
     for _ in range(num_items):
         item = order.items.add()
-        # Select a random product from the FIXED_PRODUCTS list
         chosen_product = random.choice(FIXED_PRODUCTS)
         item.item_id = chosen_product["item_id"]
         item.product_name = chosen_product["product_name"]
