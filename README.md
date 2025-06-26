@@ -10,7 +10,7 @@ Ingest simulated real-time order events via Pub/Sub into BigQuery Iceberg table.
 Step by step explanation of what the script + Terraform does:
 1. Creates Pub/Sub topic in format `order-events-${random_id.topic_suffix.hex}`
 2. Creates GCS bucket in format `${var.project_id}-${random_id.bucket_suffix.hex}` - this will be used to store Iceberg data.
-3. Creates dataset `orders` and table `order_event_iceberg` as native table.
+3. Creates dataset `orders` and table `order_event_iceberg` as native table. It also creates two native tables `order_event_native` and `order_event_native_part_clust` and subscriptions to them to showcase the diff between partitioned and clustered and non-partitioned and non-clustered tables.
 4. Creates push to BigQUery subscription from Pub/Sub topic to `order_event_iceberg`.
 5. Replaces native `order_event_iceberg` with BigQuery Table for Apache Iceberg.
 6. Last step script will output `publisher.py` with correct parameters. That script will start sending messages to Pub/Sub topic which would be immidiately visible in Iceberg table's streaming buffer.
