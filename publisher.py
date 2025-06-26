@@ -45,7 +45,7 @@ def parse_arguments():
 PROJECT_ID, TOPIC_ID = parse_arguments()
 
 
-MESSAGES_PER_MINUTE = 100
+MESSAGES_PER_MINUTE = 10000
 INTERVAL_SECONDS = 60 / MESSAGES_PER_MINUTE # Time to wait between each message
 
 fake = Faker()
