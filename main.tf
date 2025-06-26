@@ -129,9 +129,6 @@ resource "random_id" "topic_suffix" {
 resource "google_pubsub_topic" "order_topic" {
   project     = var.project_id
   name        = "order-events-${random_id.topic_suffix.hex}" # Dynamic topic name
-  message_storage_policy {
-    allowed_persistence_regions = [var.region]
-  }
 
   schema_settings {
     schema      = google_pubsub_schema.order_schema.id
