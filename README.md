@@ -50,6 +50,11 @@ The deployment script will output the exact command. Example:
 python publisher.py --project_id "your-gcp-project-id" --topic_id "order-events-<random_suffix>"
 ```
 
+If you experience protobuf generation issues, run:
+```bash
+pip install --upgrade protobuf
+```
+
 ## Cleanup
 
 Run 
