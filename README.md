@@ -55,6 +55,13 @@ If you experience protobuf generation issues, run:
 pip install --upgrade protobuf
 ```
 
+### Export table metadata
+
+If you want to have Iceberg metadata updated manually on GCS, run the following command in BigQuery SQL console:
+```sql
+EXPORT TABLE METADATA FROM `orders.order_event_iceberg`;
+```
+
 ## Cleanup
 
 Run 
